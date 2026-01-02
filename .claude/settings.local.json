@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(export ANDROID_HOME=~/Library/Android/sdk)",
+      "Bash(export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools)",
+      "Bash(emulator -list-avds:*)",
+      "Bash(export PATH=$PATH:$ANDROID_HOME/platform-tools)",
+      "Bash(adb shell:*)",
+      "Bash(adb kill-server:*)",
+      "Bash(adb start-server:*)",
+      "Bash(adb devices:*)",
+      "Bash(adb reconnect:*)",
+      "Bash(adb install:*)"
+    ]
+  }
+}
