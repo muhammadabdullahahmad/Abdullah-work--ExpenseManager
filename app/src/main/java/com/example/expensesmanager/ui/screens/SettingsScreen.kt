@@ -31,7 +31,8 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: ExpenseViewModel
+    viewModel: ExpenseViewModel,
+    onChangePin: () -> Unit = {}
 ) {
     val currencySymbol by viewModel.currencySymbol.collectAsState()
     val isDarkMode by viewModel.isDarkMode.collectAsState()
@@ -87,6 +88,48 @@ fun SettingsScreen(
                 }
             }
 
+            // Security section
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Security",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onChangePin() }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Change PIN",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = "Update your security PIN",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            text = "Change",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
             // Currency section
             item {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -112,7 +155,7 @@ fun SettingsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "Currency Symbol",
+                                text = "Change Currency",
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(

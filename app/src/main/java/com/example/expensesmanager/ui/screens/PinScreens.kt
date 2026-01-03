@@ -238,6 +238,7 @@ fun PinUnlockScreen(
 ) {
     var pin by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
+    var attemptsLeft by remember { mutableIntStateOf(3) }
 
     Column(
         modifier = Modifier
@@ -273,9 +274,15 @@ fun PinUnlockScreen(
         if (showError) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Incorrect PIN. Try again.",
+                text = "Wrong PIN, $attemptsLeft chances left",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Remind your PIN",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -298,8 +305,12 @@ fun PinUnlockScreen(
                         if (validatePin(pin)) {
                             onPinValidated()
                         } else {
+                            attemptsLeft--
                             showError = true
                             pin = ""
+                            if (attemptsLeft <= 0) {
+                                attemptsLeft = 3 // Reset attempts
+                            }
                         }
                     }
                 }
@@ -311,6 +322,138 @@ fun PinUnlockScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+fun ChangePinScreen(
+    validateCurrentPin: (String) -> Boolean,
+    onPinChanged: (String) -> Unit,
+    onCancel: () -> Unit
+) {
+    var step by remember { mutableIntStateOf(1) } // 1: Enter current, 2: Enter new, 3: Confirm new
+    var currentPin by remember { mutableStateOf("") }
+    var newPin by remember { mutableStateOf("") }
+    var confirmPin by remember { mutableStateOf("") }
+    var showError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    val title = when (step) {
+        1 -> "Enter Current PIN"
+        2 -> "Enter New PIN"
+        else -> "Confirm New PIN"
+    }
+
+    val subtitle = when (step) {
+        1 -> "Enter your current PIN to continue"
+        2 -> "Enter a new 4-digit PIN"
+        else -> "Re-enter your new PIN to confirm"
+    }
+
+    val currentPinValue = when (step) {
+        1 -> currentPin
+        2 -> newPin
+        else -> confirmPin
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(60.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        if (showError) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        PinDotsDisplay(pinLength = currentPinValue.length, isError = showError)
+
+        Spacer(modifier = Modifier.height(48.dp))
+
+        NumberPad(
+            onNumberClick = { number ->
+                showError = false
+                when (step) {
+                    1 -> {
+                        if (currentPin.length < 4) {
+                            currentPin += number
+                            if (currentPin.length == 4) {
+                                if (validateCurrentPin(currentPin)) {
+                                    step = 2
+                                    currentPin = ""
+                                } else {
+                                    showError = true
+                                    errorMessage = "Wrong PIN. Try again."
+                                    currentPin = ""
+                                }
+                            }
+                        }
+                    }
+                    2 -> {
+                        if (newPin.length < 4) {
+                            newPin += number
+                            if (newPin.length == 4) {
+                                step = 3
+                            }
+                        }
+                    }
+                    3 -> {
+                        if (confirmPin.length < 4) {
+                            confirmPin += number
+                            if (confirmPin.length == 4) {
+                                if (confirmPin == newPin) {
+                                    onPinChanged(newPin)
+                                } else {
+                                    showError = true
+                                    errorMessage = "PINs don't match. Try again."
+                                    confirmPin = ""
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            onDeleteClick = {
+                showError = false
+                when (step) {
+                    1 -> if (currentPin.isNotEmpty()) currentPin = currentPin.dropLast(1)
+                    2 -> if (newPin.isNotEmpty()) newPin = newPin.dropLast(1)
+                    3 -> if (confirmPin.isNotEmpty()) confirmPin = confirmPin.dropLast(1)
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        TextButton(
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Cancel")
+        }
     }
 }
 

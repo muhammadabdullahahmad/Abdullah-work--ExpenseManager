@@ -217,7 +217,27 @@ fun NavGraph(
             }
 
             composable(Screen.Settings.route) {
-                SettingsScreen(viewModel = viewModel)
+                SettingsScreen(
+                    viewModel = viewModel,
+                    onChangePin = {
+                        navController.navigate(Screen.ChangePin.route)
+                    }
+                )
+            }
+
+            composable(Screen.ChangePin.route) {
+                ChangePinScreen(
+                    validateCurrentPin = { pin ->
+                        preferencesManager.validatePin(pin)
+                    },
+                    onPinChanged = { newPin ->
+                        preferencesManager.setPin(newPin)
+                        navController.popBackStack()
+                    },
+                    onCancel = {
+                        navController.popBackStack()
+                    }
+                )
             }
 
             composable(

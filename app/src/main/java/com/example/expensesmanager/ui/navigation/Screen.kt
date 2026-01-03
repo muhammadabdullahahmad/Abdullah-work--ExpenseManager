@@ -7,6 +7,7 @@ sealed class Screen(val route: String) {
         fun createRoute(pin: String) = "pin_confirm/$pin"
     }
     object PinUnlock : Screen("pin_unlock")
+    object ChangePin : Screen("change_pin")
     object Home : Screen("home")
     object Statistics : Screen("statistics")
     object Settings : Screen("settings")
