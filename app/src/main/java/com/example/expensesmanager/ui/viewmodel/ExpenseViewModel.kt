@@ -31,6 +31,8 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     val totalSpending: StateFlow<Double>
     val totalEarnings: StateFlow<Double>
     val totalDebt: StateFlow<Double>
+    val totalLend: StateFlow<Double>
+    val totalBorrow: StateFlow<Double>
 
     val spendingCategoryTotals: StateFlow<List<CategoryTotal>>
     val earningCategoryTotals: StateFlow<List<CategoryTotal>>
@@ -98,6 +100,18 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         totalDebt = _selectedMonth.flatMapLatest { calendar ->
             val (start, end) = getMonthRange(calendar)
             repository.getTotalDebtByDateRange(start, end)
+        }.map { it ?: 0.0 }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+        totalLend = _selectedMonth.flatMapLatest { calendar ->
+            val (start, end) = getMonthRange(calendar)
+            repository.getTotalLendByDateRange(start, end)
+        }.map { it ?: 0.0 }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+        totalBorrow = _selectedMonth.flatMapLatest { calendar ->
+            val (start, end) = getMonthRange(calendar)
+            repository.getTotalBorrowByDateRange(start, end)
         }.map { it ?: 0.0 }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 

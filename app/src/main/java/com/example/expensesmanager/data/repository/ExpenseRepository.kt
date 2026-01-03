@@ -41,6 +41,12 @@ class ExpenseRepository(
     fun getTotalDebtByDateRange(startDate: Long, endDate: Long): Flow<Double?> =
         expenseDao.getTotalDebtByDateRange(startDate, endDate)
 
+    fun getTotalLendByDateRange(startDate: Long, endDate: Long): Flow<Double?> =
+        expenseDao.getTotalLendByDateRange(startDate, endDate)
+
+    fun getTotalBorrowByDateRange(startDate: Long, endDate: Long): Flow<Double?> =
+        expenseDao.getTotalBorrowByDateRange(startDate, endDate)
+
     fun getSpendingCategoryTotals(startDate: Long, endDate: Long): Flow<List<CategoryTotal>> =
         expenseDao.getSpendingCategoryTotals(startDate, endDate)
 

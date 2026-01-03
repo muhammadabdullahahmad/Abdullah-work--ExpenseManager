@@ -34,6 +34,8 @@ fun HomeScreen(
     val totalSpending by viewModel.totalSpending.collectAsState()
     val totalEarnings by viewModel.totalEarnings.collectAsState()
     val totalDebt by viewModel.totalDebt.collectAsState()
+    val totalLend by viewModel.totalLend.collectAsState()
+    val totalBorrow by viewModel.totalBorrow.collectAsState()
 
     val selectedMonth by viewModel.selectedMonth.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
@@ -42,7 +44,10 @@ fun HomeScreen(
     val tabs = listOf("Spending", "Earnings", "Debt")
 
     val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
-    val balance = totalEarnings - totalSpending - totalDebt
+    // Balance = Earnings - Spending - Lend + Borrow
+    // Lend: money you give away (decreases cash)
+    // Borrow: money you receive (increases cash)
+    val balance = totalEarnings - totalSpending - totalLend + totalBorrow
 
     Scaffold(
         floatingActionButton = {
@@ -192,7 +197,7 @@ fun MonthSelector(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

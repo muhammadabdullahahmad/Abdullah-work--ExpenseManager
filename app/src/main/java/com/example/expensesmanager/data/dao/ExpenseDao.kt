@@ -39,6 +39,12 @@ interface ExpenseDao {
     @Query("SELECT SUM(amount) FROM expenses WHERE type = 'DEBT' AND date BETWEEN :startDate AND :endDate")
     fun getTotalDebtByDateRange(startDate: Long, endDate: Long): Flow<Double?>
 
+    @Query("SELECT SUM(amount) FROM expenses WHERE type = 'DEBT' AND category = 'Lend' AND date BETWEEN :startDate AND :endDate")
+    fun getTotalLendByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+
+    @Query("SELECT SUM(amount) FROM expenses WHERE type = 'DEBT' AND category = 'Borrow' AND date BETWEEN :startDate AND :endDate")
+    fun getTotalBorrowByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+
     @Query("SELECT category, SUM(amount) as total FROM expenses WHERE type = 'SPENDING' AND date BETWEEN :startDate AND :endDate GROUP BY category")
     fun getSpendingCategoryTotals(startDate: Long, endDate: Long): Flow<List<CategoryTotal>>
 
