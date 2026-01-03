@@ -58,8 +58,8 @@ class PreferencesManager(context: Context) {
         val lastActive = getLastActiveTime()
         if (lastActive == 0L) return true
         val currentTime = System.currentTimeMillis()
-        val twoMinutes = 2 * 60 * 1000L // 2 minutes in milliseconds
-        return (currentTime - lastActive) > twoMinutes
+        val timeout = 10 * 1000L // 10 seconds in milliseconds
+        return (currentTime - lastActive) > timeout
     }
 
     companion object {

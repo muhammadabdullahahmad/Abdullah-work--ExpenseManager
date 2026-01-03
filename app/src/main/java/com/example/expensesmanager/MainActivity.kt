@@ -1,5 +1,6 @@
 package com.example.expensesmanager
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,55 +16,37 @@ import com.example.expensesmanager.ui.viewmodel.ExpenseViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var preferencesManager: PreferencesManager
-    private var shouldShowPinOnResume = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preferencesManager = PreferencesManager.getInstance(this)
         enableEdgeToEdge()
 
+        // Determine initial start destination
+        val initialDestination = getStartDestination()
+
         setContent {
             val viewModel: ExpenseViewModel = viewModel()
             val isDarkMode by viewModel.isDarkMode.collectAsState()
 
-            // Track if we need to show PIN unlock
-            var showPinUnlock by remember { mutableStateOf(false) }
-
-            // Check on recomposition if PIN is needed
-            LaunchedEffect(shouldShowPinOnResume) {
-                if (shouldShowPinOnResume && preferencesManager.isPinSet() && preferencesManager.shouldRequirePin()) {
-                    showPinUnlock = true
-                    shouldShowPinOnResume = false
-                }
-            }
-
-            // Determine start destination based on PIN state
-            val startDestination = when {
-                !preferencesManager.isPinSet() -> Screen.PinWelcome.route
-                preferencesManager.shouldRequirePin() || showPinUnlock -> Screen.PinUnlock.route
-                else -> Screen.Home.route
-            }
-
             ExpensesManagerTheme(darkTheme = isDarkMode) {
                 val navController = rememberNavController()
-
-                // Navigate to PIN unlock if needed after resume
-                LaunchedEffect(showPinUnlock) {
-                    if (showPinUnlock && preferencesManager.isPinSet()) {
-                        navController.navigate(Screen.PinUnlock.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                        showPinUnlock = false
-                    }
-                }
 
                 NavGraph(
                     navController = navController,
                     viewModel = viewModel,
                     preferencesManager = preferencesManager,
-                    startDestination = startDestination
+                    startDestination = initialDestination
                 )
             }
+        }
+    }
+
+    private fun getStartDestination(): String {
+        return when {
+            !preferencesManager.isPinSet() -> Screen.PinWelcome.route
+            preferencesManager.shouldRequirePin() -> Screen.PinUnlock.route
+            else -> Screen.Home.route
         }
     }
 
@@ -79,7 +62,11 @@ class MainActivity : ComponentActivity() {
         super.onRestart()
         // Check if PIN should be required when app comes back
         if (preferencesManager.isPinSet() && preferencesManager.shouldRequirePin()) {
-            shouldShowPinOnResume = true
+            // Restart the activity to show PIN screen
+            val intent = Intent(this, MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            finish()
         }
     }
 }
