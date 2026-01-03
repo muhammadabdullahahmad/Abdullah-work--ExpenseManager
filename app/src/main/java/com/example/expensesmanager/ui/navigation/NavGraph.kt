@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.example.expensesmanager.data.PreferencesManager
 import com.example.expensesmanager.data.model.TransactionType
 import com.example.expensesmanager.ui.screens.*
 import com.example.expensesmanager.ui.viewmodel.ExpenseViewModel
@@ -55,7 +56,9 @@ val bottomNavItems = listOf(
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    viewModel: ExpenseViewModel
+    viewModel: ExpenseViewModel,
+    preferencesManager: PreferencesManager,
+    startDestination: String
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -143,9 +146,60 @@ fun NavGraph(
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(padding)
         ) {
+            // PIN Screens
+            composable(Screen.PinWelcome.route) {
+                PinWelcomeScreen(
+                    onNextClick = {
+                        navController.navigate(Screen.PinSetup.route)
+                    }
+                )
+            }
+
+            composable(Screen.PinSetup.route) {
+                PinSetupScreen(
+                    onPinEntered = { pin ->
+                        navController.navigate(Screen.PinConfirm.createRoute(pin))
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.PinConfirm.route,
+                arguments = listOf(navArgument("pin") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val pin = backStackEntry.arguments?.getString("pin") ?: ""
+                PinConfirmScreen(
+                    originalPin = pin,
+                    onPinConfirmed = {
+                        preferencesManager.setPin(pin)
+                        preferencesManager.setLastActiveTime(System.currentTimeMillis())
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.PinWelcome.route) { inclusive = true }
+                        }
+                    },
+                    onPinMismatch = {
+                        // PIN mismatch handled in the screen
+                    }
+                )
+            }
+
+            composable(Screen.PinUnlock.route) {
+                PinUnlockScreen(
+                    onPinValidated = {
+                        preferencesManager.setLastActiveTime(System.currentTimeMillis())
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.PinUnlock.route) { inclusive = true }
+                        }
+                    },
+                    validatePin = { pin ->
+                        preferencesManager.validatePin(pin)
+                    }
+                )
+            }
+
             composable(Screen.Home.route) {
                 HomeScreen(
                     viewModel = viewModel,

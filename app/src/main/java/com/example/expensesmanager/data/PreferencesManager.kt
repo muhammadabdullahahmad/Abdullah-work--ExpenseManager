@@ -32,10 +32,42 @@ class PreferencesManager(context: Context) {
         _isDarkMode.value = enabled
     }
 
+    // PIN related methods
+    fun isPinSet(): Boolean {
+        return prefs.getString(KEY_PIN, null) != null
+    }
+
+    fun setPin(pin: String) {
+        prefs.edit().putString(KEY_PIN, pin).apply()
+    }
+
+    fun validatePin(pin: String): Boolean {
+        return prefs.getString(KEY_PIN, null) == pin
+    }
+
+    fun getLastActiveTime(): Long {
+        return prefs.getLong(KEY_LAST_ACTIVE_TIME, 0L)
+    }
+
+    fun setLastActiveTime(time: Long) {
+        prefs.edit().putLong(KEY_LAST_ACTIVE_TIME, time).apply()
+    }
+
+    fun shouldRequirePin(): Boolean {
+        if (!isPinSet()) return false
+        val lastActive = getLastActiveTime()
+        if (lastActive == 0L) return true
+        val currentTime = System.currentTimeMillis()
+        val twoMinutes = 2 * 60 * 1000L // 2 minutes in milliseconds
+        return (currentTime - lastActive) > twoMinutes
+    }
+
     companion object {
         private const val KEY_CURRENCY_CODE = "currency_code"
         private const val KEY_CURRENCY_SYMBOL = "currency_symbol"
         private const val KEY_DARK_MODE = "dark_mode"
+        private const val KEY_PIN = "app_pin"
+        private const val KEY_LAST_ACTIVE_TIME = "last_active_time"
 
         @Volatile
         private var INSTANCE: PreferencesManager? = null
