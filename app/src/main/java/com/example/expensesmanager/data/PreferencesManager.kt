@@ -62,12 +62,43 @@ class PreferencesManager(context: Context) {
         return (currentTime - lastActive) > timeout
     }
 
+    // Lockout methods
+    fun setLockoutTime(time: Long) {
+        prefs.edit().putLong(KEY_LOCKOUT_TIME, time).apply()
+    }
+
+    fun getLockoutTime(): Long {
+        return prefs.getLong(KEY_LOCKOUT_TIME, 0L)
+    }
+
+    fun isLockedOut(): Boolean {
+        val lockoutTime = getLockoutTime()
+        if (lockoutTime == 0L) return false
+        val currentTime = System.currentTimeMillis()
+        val oneMinute = 60 * 1000L
+        return (currentTime - lockoutTime) < oneMinute
+    }
+
+    fun getRemainingLockoutSeconds(): Int {
+        val lockoutTime = getLockoutTime()
+        if (lockoutTime == 0L) return 0
+        val currentTime = System.currentTimeMillis()
+        val oneMinute = 60 * 1000L
+        val remaining = oneMinute - (currentTime - lockoutTime)
+        return if (remaining > 0) (remaining / 1000).toInt() else 0
+    }
+
+    fun clearLockout() {
+        prefs.edit().putLong(KEY_LOCKOUT_TIME, 0L).apply()
+    }
+
     companion object {
         private const val KEY_CURRENCY_CODE = "currency_code"
         private const val KEY_CURRENCY_SYMBOL = "currency_symbol"
         private const val KEY_DARK_MODE = "dark_mode"
         private const val KEY_PIN = "app_pin"
         private const val KEY_LAST_ACTIVE_TIME = "last_active_time"
+        private const val KEY_LOCKOUT_TIME = "lockout_time"
 
         @Volatile
         private var INSTANCE: PreferencesManager? = null

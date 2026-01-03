@@ -234,11 +234,40 @@ fun PinConfirmScreen(
 @Composable
 fun PinUnlockScreen(
     onPinValidated: () -> Unit,
-    validatePin: (String) -> Boolean
+    validatePin: (String) -> Boolean,
+    isLockedOut: () -> Boolean = { false },
+    getRemainingSeconds: () -> Int = { 0 },
+    onLockout: () -> Unit = {},
+    onLockoutCleared: () -> Unit = {}
 ) {
     var pin by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
     var attemptsLeft by remember { mutableIntStateOf(3) }
+    var isLocked by remember { mutableStateOf(isLockedOut()) }
+    var remainingSeconds by remember { mutableIntStateOf(getRemainingSeconds()) }
+
+    // Timer for countdown
+    LaunchedEffect(isLocked) {
+        if (isLocked) {
+            while (remainingSeconds > 0) {
+                kotlinx.coroutines.delay(1000L)
+                remainingSeconds = getRemainingSeconds()
+                if (remainingSeconds <= 0) {
+                    isLocked = false
+                    attemptsLeft = 3
+                    onLockoutCleared()
+                }
+            }
+        }
+    }
+
+    // Check lockout on start
+    LaunchedEffect(Unit) {
+        if (isLockedOut()) {
+            isLocked = true
+            remainingSeconds = getRemainingSeconds()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -252,76 +281,107 @@ fun PinUnlockScreen(
             imageVector = Icons.Default.Lock,
             contentDescription = "Locked",
             modifier = Modifier.size(60.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = if (isLocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Enter PIN",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Enter your PIN to access the app",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        if (showError) {
-            Spacer(modifier = Modifier.height(8.dp))
+        if (isLocked) {
+            // Lockout screen
             Text(
-                text = "Wrong PIN, $attemptsLeft chances left",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Too Many Attempts",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.error
             )
-            Spacer(modifier = Modifier.height(4.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = "Remind your PIN",
-                style = MaterialTheme.typography.bodySmall,
+                text = "Wait for 1 minute to try again",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "$remainingSeconds seconds remaining",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            )
+        } else {
+            // Normal PIN entry
+            Text(
+                text = "Enter PIN",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Enter your PIN to access the app",
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
 
-        Spacer(modifier = Modifier.height(40.dp))
+            if (showError) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Wrong PIN, $attemptsLeft chances left",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Remind your PIN",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-        // PIN dots display
-        PinDotsDisplay(pinLength = pin.length, isError = showError)
+            Spacer(modifier = Modifier.height(40.dp))
 
-        Spacer(modifier = Modifier.height(48.dp))
+            // PIN dots display
+            PinDotsDisplay(pinLength = pin.length, isError = showError)
 
-        // Number pad
-        NumberPad(
-            onNumberClick = { number ->
-                if (pin.length < 4) {
-                    pin += number
-                    showError = false
+            Spacer(modifier = Modifier.height(48.dp))
 
-                    // Auto-validate when 4 digits entered
-                    if (pin.length == 4) {
-                        if (validatePin(pin)) {
-                            onPinValidated()
-                        } else {
-                            attemptsLeft--
-                            showError = true
-                            pin = ""
-                            if (attemptsLeft <= 0) {
-                                attemptsLeft = 3 // Reset attempts
+            // Number pad
+            NumberPad(
+                onNumberClick = { number ->
+                    if (pin.length < 4) {
+                        pin += number
+                        showError = false
+
+                        // Auto-validate when 4 digits entered
+                        if (pin.length == 4) {
+                            if (validatePin(pin)) {
+                                onPinValidated()
+                            } else {
+                                attemptsLeft--
+                                showError = true
+                                pin = ""
+                                if (attemptsLeft <= 0) {
+                                    isLocked = true
+                                    remainingSeconds = 60
+                                    onLockout()
+                                }
                             }
                         }
                     }
+                },
+                onDeleteClick = {
+                    if (pin.isNotEmpty()) {
+                        pin = pin.dropLast(1)
+                        showError = false
+                    }
                 }
-            },
-            onDeleteClick = {
-                if (pin.isNotEmpty()) {
-                    pin = pin.dropLast(1)
-                    showError = false
-                }
-            }
-        )
+            )
+        }
     }
 }
 

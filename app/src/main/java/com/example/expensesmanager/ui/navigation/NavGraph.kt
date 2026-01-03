@@ -189,6 +189,7 @@ fun NavGraph(
             composable(Screen.PinUnlock.route) {
                 PinUnlockScreen(
                     onPinValidated = {
+                        preferencesManager.clearLockout()
                         preferencesManager.setLastActiveTime(System.currentTimeMillis())
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.PinUnlock.route) { inclusive = true }
@@ -196,6 +197,18 @@ fun NavGraph(
                     },
                     validatePin = { pin ->
                         preferencesManager.validatePin(pin)
+                    },
+                    isLockedOut = {
+                        preferencesManager.isLockedOut()
+                    },
+                    getRemainingSeconds = {
+                        preferencesManager.getRemainingLockoutSeconds()
+                    },
+                    onLockout = {
+                        preferencesManager.setLockoutTime(System.currentTimeMillis())
+                    },
+                    onLockoutCleared = {
+                        preferencesManager.clearLockout()
                     }
                 )
             }
