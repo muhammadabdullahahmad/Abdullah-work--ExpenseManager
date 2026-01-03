@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -379,11 +378,10 @@ fun NumberPad(
                                     .clickable { onDeleteClick() },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Backspace,
-                                    contentDescription = "Delete",
-                                    modifier = Modifier.size(28.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface
+                                Text(
+                                    text = "⌫",
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
